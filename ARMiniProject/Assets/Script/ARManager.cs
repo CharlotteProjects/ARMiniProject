@@ -12,6 +12,7 @@ public class ARManager : MonoBehaviour
         unscrew,
         removeCoverGround,
         removePower,
+        component,
     }
     Step myStep = Step.Non;
 
@@ -27,14 +28,15 @@ public class ARManager : MonoBehaviour
 
     [Header("--- Back Group ---")]
     [SerializeField] GameObject backGroup = null;
-    [SerializeField] GameObject ringGround = null;
-    [SerializeField] GameObject ScrewdriversGround = null;
-    [SerializeField] GameObject BackCoverGround = null;
+    [SerializeField] GameObject ringGroup = null;
+    [SerializeField] GameObject screwdriversGroup = null;
+    [SerializeField] GameObject backCoverGroup = null;
     [SerializeField] List<GameObject> ring;
 
     [Header("--- Body Group ---")]
     [SerializeField] GameObject bodyGroup = null;
-
+    [SerializeField] GameObject removerPowerGroup = null;
+    [SerializeField] GameObject componentGroup = null;
     [Header("--- Message Group ---")]
     [SerializeField] GameObject messageBlock = null;
     RectTransform messageBG = null;
@@ -46,6 +48,7 @@ public class ARManager : MonoBehaviour
     [SerializeField] Button exitButton = null;
     [SerializeField] Button frontButton = null;
     [SerializeField] Button nextButton = null;
+    [SerializeField] Button RamButton = null;
     [Header("--- Other Group ---")]
     [SerializeField] AudioClip onClickSound = null;
     float backTime = 0.2f;
@@ -60,7 +63,9 @@ public class ARManager : MonoBehaviour
     List<string> actionMessage = new List<string>
     {
         "Step 1 : Unscrew the screws ...",
-        "Step 2 : Remove the back cover ..."
+        "Step 2 : Remove the back cover ...",
+        "Step 3 : Remove the power ...",
+        "Please choose an option at top-right ..."
     };
 
     void Start()
@@ -80,8 +85,8 @@ public class ARManager : MonoBehaviour
         messageText = messageBlock.transform.Find("Text").transform.GetComponent<TMP_Text>();
         ActionText = ActionBlock.transform.Find("Text").transform.GetComponent<TMP_Text>();
 
-        ScrewdriversGround.SetActive(false);
-        BackCoverGround.SetActive(false);
+        screwdriversGroup.SetActive(false);
+        backCoverGroup.SetActive(false);
         LeanTween.color(messageBG, transparent, 0);
         ActionBlock.SetActive(false);
     }
@@ -98,9 +103,10 @@ public class ARManager : MonoBehaviour
             switch (myStep)
             {
                 case Step.removeCoverGround:
-                    BackCoverGround.SetActive(false);
-                    frontButton.gameObject.SetActive(false);
-                    nextButton.gameObject.SetActive(true);
+                    ringGroup.SetActive(true);
+                    screwdriversGroup.SetActive(true);
+                    ActionBlock.SetActive(true);
+                    ActionText.text = actionMessage[0];
 
                     if (CoroutineBack != null)
                     {
@@ -108,9 +114,9 @@ public class ARManager : MonoBehaviour
                         CoroutineBack = null;
                     }
 
-                    ringGround.SetActive(true);
-                    ScrewdriversGround.SetActive(true);
-                    ActionText.text = actionMessage[0];
+                    backCoverGroup.SetActive(false);
+                    frontButton.gameObject.SetActive(false);
+                    nextButton.gameObject.SetActive(true);
                     myStep = Step.unscrew;
                     break;
             }
@@ -132,8 +138,9 @@ public class ARManager : MonoBehaviour
             switch (myStep)
             {
                 case Step.unscrew:
-                    ringGround.SetActive(false);
-                    ScrewdriversGround.SetActive(false);
+                    backCoverGroup.SetActive(true);
+                    ActionBlock.SetActive(true);
+                    ActionText.text = actionMessage[1];
 
                     if (CoroutineBack != null)
                     {
@@ -141,11 +148,26 @@ public class ARManager : MonoBehaviour
                         CoroutineBack = null;
                     }
 
-                    ActionText.text = actionMessage[1];
-                    BackCoverGround.SetActive(true);
+                    ringGroup.SetActive(false);
+                    screwdriversGroup.SetActive(false);
                     frontButton.gameObject.SetActive(true);
                     nextButton.gameObject.SetActive(false);
                     myStep = Step.removeCoverGround;
+                    break;
+
+                case Step.removePower:
+                    componentGroup.SetActive(true);
+
+                    if (CoroutineBack != null)
+                    {
+                        StopCoroutine(CoroutineBack);
+                        CoroutineBack = null;
+                    }
+
+                    removerPowerGroup.SetActive(false);
+                    frontButton.gameObject.SetActive(false);
+                    nextButton.gameObject.SetActive(false);
+                    myStep = Step.component;
                     break;
             }
 
@@ -156,6 +178,11 @@ public class ARManager : MonoBehaviour
                 messageText.color = transparent;
                 LeanTween.color(messageBG, transparent, 0.5f);
             }
+        });
+
+        RamButton.onClick.AddListener(() =>
+        {
+            audioSource.PlayOneShot(onClickSound);
         });
 
         frontButton.gameObject.SetActive(false);
@@ -171,8 +198,13 @@ public class ARManager : MonoBehaviour
             case Step.Non:
                 myStep = Step.unscrew;
                 break;
+
             case Step.removeCoverGround:
                 frontButton.gameObject.SetActive(true);
+                break;
+
+            case Step.removePower:
+                myStep = Step.unscrew;
                 break;
         }
 
@@ -202,10 +234,20 @@ public class ARManager : MonoBehaviour
         {
             StopCoroutine(CoroutineBack);
             CoroutineBack = null;
-            ScrewdriversGround.SetActive(false);
+            screwdriversGroup.SetActive(false);
+            backCoverGroup.SetActive(false);
 
             for (int i = 0; i < ring.Count; i++)
                 ring[i].SetActive(false);
+        }
+
+        if (CoroutineBody != null)
+        {
+            StopCoroutine(CoroutineBody);
+            CoroutineBody = null;
+
+            removerPowerGroup.SetActive(false);
+            componentGroup.SetActive(false);
         }
 
         if (CoroutineCloseAction == null)
@@ -225,6 +267,24 @@ public class ARManager : MonoBehaviour
 
     public void DetectedBody()
     {
+        switch (myStep)
+        {
+            case Step.Non:
+                myStep = Step.component;
+                break;
+            case Step.unscrew:
+            case Step.removeCoverGround:
+                myStep = Step.removePower;
+                break;
+        }
+
+
+        if (CoroutineBack != null)
+        {
+            StopCoroutine(CoroutineBack);
+            CoroutineBack = null;
+        }
+
         if (CoroutineBody == null)
         {
             CoroutineBody = StartCoroutine(_detectedBody());
@@ -246,6 +306,8 @@ public class ARManager : MonoBehaviour
         switch (myStep)
         {
             case Step.unscrew:
+                backCoverGroup.SetActive(false);
+                ringGroup.SetActive(true);
                 ActionBlock.SetActive(true);
                 ActionText.text = actionMessage[0];
 
@@ -256,23 +318,45 @@ public class ARManager : MonoBehaviour
                 }
 
                 backTime = 0.05f;
-                ScrewdriversGround.SetActive(true);
+                screwdriversGroup.SetActive(true);
                 break;
 
             case Step.removeCoverGround:
                 ActionBlock.SetActive(true);
                 ActionText.text = actionMessage[1];
-
-                ringGround.SetActive(false);
-                ScrewdriversGround.SetActive(false);
-                BackCoverGround.SetActive(true);
+                ringGroup.SetActive(false);
+                screwdriversGroup.SetActive(false);
+                backCoverGroup.SetActive(true);
                 break;
         }
     }
 
     IEnumerator _detectedBody()
     {
-        yield return new WaitForSeconds(0.2f);
+        yield return null;
+
+        switch (myStep)
+        {
+            case Step.removePower:
+                removerPowerGroup.SetActive(true);
+                ActionBlock.SetActive(true);
+                ActionText.text = actionMessage[2];
+                nextButton.gameObject.SetActive(true);
+
+                ringGroup.SetActive(false);
+                screwdriversGroup.SetActive(false);
+                backCoverGroup.SetActive(false);
+                componentGroup.SetActive(false);
+                break;
+
+            case Step.component:
+                componentGroup.SetActive(true);
+                ActionBlock.SetActive(true);
+                ActionText.text = actionMessage[3];
+
+                removerPowerGroup.SetActive(false);
+                break;
+        }
     }
 
     IEnumerator ShowMessage(int stringNumber, float displayTime = 3)
@@ -304,7 +388,7 @@ public class ARManager : MonoBehaviour
             myStyle.normal.textColor = Color.green;
             myStyle.hover.textColor = Color.red;
 
-            GUI.Box(new Rect(10, 10, 200, 20), debugString, myStyle);
+            GUI.Box(new Rect(10, 10, 200, 40), debugString, myStyle);
         }
     }
 }
