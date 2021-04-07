@@ -10,7 +10,7 @@ public class ARManager : MonoBehaviour
     {
         Non,
         unscrew,
-        removeCoverGround,
+        removeBackCoverGroup,
         removePower,
         component,
     }
@@ -52,7 +52,7 @@ public class ARManager : MonoBehaviour
     [Header("--- Other Group ---")]
     [SerializeField] AudioClip onClickSound = null;
     float backTime = 0.2f;
-    string debugString = "Debug:\n";
+    bool detected = false;
 
     List<string> message = new List<string>
     {
@@ -65,7 +65,7 @@ public class ARManager : MonoBehaviour
         "Step 1 : Unscrew the screws ...",
         "Step 2 : Remove the back cover ...",
         "Step 3 : Remove the power ...",
-        "Please choose an option at top-right ..."
+        "Please choose an option ..."
     };
 
     void Start()
@@ -102,7 +102,7 @@ public class ARManager : MonoBehaviour
 
             switch (myStep)
             {
-                case Step.removeCoverGround:
+                case Step.removeBackCoverGroup:
                     ringGroup.SetActive(true);
                     screwdriversGroup.SetActive(true);
                     ActionBlock.SetActive(true);
@@ -152,11 +152,13 @@ public class ARManager : MonoBehaviour
                     screwdriversGroup.SetActive(false);
                     frontButton.gameObject.SetActive(true);
                     nextButton.gameObject.SetActive(false);
-                    myStep = Step.removeCoverGround;
+                    myStep = Step.removeBackCoverGroup;
                     break;
 
                 case Step.removePower:
                     componentGroup.SetActive(true);
+                    ActionBlock.SetActive(true);
+                    ActionText.text = actionMessage[3];
 
                     if (CoroutineBack != null)
                     {
@@ -191,6 +193,7 @@ public class ARManager : MonoBehaviour
 
     public void DetectedBack()
     {
+        detected = true;
         nextButton.gameObject.SetActive(true);
 
         switch (myStep)
@@ -199,11 +202,12 @@ public class ARManager : MonoBehaviour
                 myStep = Step.unscrew;
                 break;
 
-            case Step.removeCoverGround:
+            case Step.removeBackCoverGroup:
                 frontButton.gameObject.SetActive(true);
                 break;
 
             case Step.removePower:
+            case Step.component:
                 myStep = Step.unscrew;
                 break;
         }
@@ -227,6 +231,7 @@ public class ARManager : MonoBehaviour
 
     public void LostBack()
     {
+        detected = false;
         frontButton.gameObject.SetActive(false);
         nextButton.gameObject.SetActive(false);
 
@@ -267,13 +272,15 @@ public class ARManager : MonoBehaviour
 
     public void DetectedBody()
     {
+        detected = true;
         switch (myStep)
         {
             case Step.Non:
                 myStep = Step.component;
                 break;
             case Step.unscrew:
-            case Step.removeCoverGround:
+            case Step.removeBackCoverGroup:
+            case Step.removePower:
                 myStep = Step.removePower;
                 break;
         }
@@ -321,7 +328,7 @@ public class ARManager : MonoBehaviour
                 screwdriversGroup.SetActive(true);
                 break;
 
-            case Step.removeCoverGround:
+            case Step.removeBackCoverGroup:
                 ActionBlock.SetActive(true);
                 ActionText.text = actionMessage[1];
                 ringGroup.SetActive(false);
@@ -388,7 +395,7 @@ public class ARManager : MonoBehaviour
             myStyle.normal.textColor = Color.green;
             myStyle.hover.textColor = Color.red;
 
-            GUI.Box(new Rect(10, 10, 200, 40), debugString, myStyle);
+            GUI.Box(new Rect(100, 0, 200, 40), "" + detected, myStyle);
         }
     }
 }
