@@ -15,6 +15,10 @@ public class ARManager : MonoBehaviour
         removePower,
         component,
         Ram,
+        SSD,
+        Fan,
+        Power,
+        DVD,
     }
     Step myStep = Step.Non;
 
@@ -73,7 +77,11 @@ public class ARManager : MonoBehaviour
         "Step 2 : Remove the back cover ...",
         "Step 3 : Remove the power ...",
         "Please choose an option ...",
-        "You choose to remove RAM ..."
+        "You choose to remove RAM ...",
+        "You choose to remove SSD, to be develop ...",
+        "You choose to remove Fan, to be develop ...",
+        "You choose to remove Power, to be develop ...",
+        "You choose to remove DVD, to be develop ...",
     };
 
     void Start()
@@ -132,6 +140,10 @@ public class ARManager : MonoBehaviour
                     myStep = Step.unscrew;
                     break;
                 case Step.Ram:
+                case Step.SSD:
+                case Step.Fan:
+                case Step.Power:
+                case Step.DVD:
                     componentButton.ForEach(button => button.gameObject.transform.parent.parent.gameObject.SetActive(true));
 
                     frontButton.gameObject.SetActive(false);
@@ -203,13 +215,13 @@ public class ARManager : MonoBehaviour
 
         for (int i = 0; i < componentButton.Count; i++)
         {
-            componentButton[i].onClick.AddListener(() =>
+            int number = i;
+            componentButton[number].onClick.AddListener(() =>
             {
                 audioSource.PlayOneShot(onClickSound);
                 componentButton.ForEach(button => button.gameObject.transform.parent.parent.gameObject.SetActive(false));
-                componentButton[i].gameObject.SetActive(true);
                 frontButton.gameObject.SetActive(true);
-                myStep = Step.Ram;
+                RemoveComponent(number);
             });
         }
 
@@ -302,6 +314,7 @@ public class ARManager : MonoBehaviour
         detected = true;
         switch (myStep)
         {
+            //! if first time login and sensor the inside
             case Step.Non:
                 myStep = Step.component;
                 break;
@@ -332,6 +345,31 @@ public class ARManager : MonoBehaviour
         if (CoroutineCloseAction != null)
         {
             StopCoroutine(CoroutineCloseAction);
+        }
+    }
+
+    void RemoveComponent(int componentNumber)
+    {
+        ActionBlock.SetActive(true);
+        componentButton[componentNumber].gameObject.SetActive(true);
+        ActionText.text = actionMessage[componentNumber + 4];
+        switch (componentNumber)
+        {
+            case 0:
+                myStep = Step.Ram;
+                break;
+            case 1:
+                myStep = Step.SSD;
+                break;
+            case 2:
+                myStep = Step.Fan;
+                break;
+            case 3:
+                myStep = Step.Power;
+                break;
+            case 4:
+                myStep = Step.DVD;
+                break;
         }
     }
 
@@ -399,6 +437,37 @@ public class ARManager : MonoBehaviour
                 ActionText.text = actionMessage[4];
 
                 removerPowerGroup.SetActive(false);
+                break;
+            case Step.SSD:
+                componentGroup.SetActive(true);
+                ActionBlock.SetActive(true);
+                ActionText.text = actionMessage[5];
+
+                removerPowerGroup.SetActive(false);
+                break;
+
+            case Step.Fan:
+                componentGroup.SetActive(true);
+                ActionBlock.SetActive(true);
+                ActionText.text = actionMessage[6];
+
+                removerPowerGroup.SetActive(false);
+                break;
+            case Step.Power:
+                componentGroup.SetActive(true);
+                ActionBlock.SetActive(true);
+                ActionText.text = actionMessage[7];
+
+                removerPowerGroup.SetActive(false);
+
+                break;
+            case Step.DVD:
+                componentGroup.SetActive(true);
+                ActionBlock.SetActive(true);
+                ActionText.text = actionMessage[8];
+
+                removerPowerGroup.SetActive(false);
+
                 break;
         }
     }
