@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using System.Linq;
 
 public class ARManager : MonoBehaviour
 {
@@ -13,6 +14,7 @@ public class ARManager : MonoBehaviour
         removeBackCoverGroup,
         removePower,
         component,
+        Ram,
     }
     Step myStep = Step.Non;
 
@@ -31,25 +33,30 @@ public class ARManager : MonoBehaviour
     [SerializeField] GameObject ringGroup = null;
     [SerializeField] GameObject screwdriversGroup = null;
     [SerializeField] GameObject backCoverGroup = null;
-    [SerializeField] List<GameObject> ring;
+    [SerializeField] List<GameObject> ring = new List<GameObject>();
 
     [Header("--- Body Group ---")]
     [SerializeField] GameObject bodyGroup = null;
     [SerializeField] GameObject removerPowerGroup = null;
     [SerializeField] GameObject componentGroup = null;
+
     [Header("--- Message Group ---")]
     [SerializeField] GameObject messageBlock = null;
     RectTransform messageBG = null;
     TMP_Text messageText = null;
+
     [Header("--- Action Group ---")]
     [SerializeField] GameObject ActionBlock = null;
     TMP_Text ActionText = null;
+
     [Header("--- Button Group ---")]
     [SerializeField] Button exitButton = null;
     [SerializeField] Button frontButton = null;
     [SerializeField] Button nextButton = null;
-    [SerializeField] Button RamButton = null;
+    [SerializeField] List<Button> componentButton = new List<Button>();
+
     [Header("--- Other Group ---")]
+    [SerializeField] GameObject screwdriversType = null;
     [SerializeField] AudioClip onClickSound = null;
     float backTime = 0.2f;
     bool detected = false;
@@ -65,7 +72,8 @@ public class ARManager : MonoBehaviour
         "Step 1 : Unscrew the screws ...",
         "Step 2 : Remove the back cover ...",
         "Step 3 : Remove the power ...",
-        "Please choose an option ..."
+        "Please choose an option ...",
+        "You choose to remove RAM ..."
     };
 
     void Start()
@@ -86,7 +94,10 @@ public class ARManager : MonoBehaviour
         ActionText = ActionBlock.transform.Find("Text").transform.GetComponent<TMP_Text>();
 
         screwdriversGroup.SetActive(false);
+        screwdriversType.SetActive(false);
         backCoverGroup.SetActive(false);
+        removerPowerGroup.SetActive(false);
+        componentGroup.SetActive(false);
         LeanTween.color(messageBG, transparent, 0);
         ActionBlock.SetActive(false);
     }
@@ -105,6 +116,7 @@ public class ARManager : MonoBehaviour
                 case Step.removeBackCoverGroup:
                     ringGroup.SetActive(true);
                     screwdriversGroup.SetActive(true);
+                    screwdriversType.SetActive(true);
                     ActionBlock.SetActive(true);
                     ActionText.text = actionMessage[0];
 
@@ -118,6 +130,12 @@ public class ARManager : MonoBehaviour
                     frontButton.gameObject.SetActive(false);
                     nextButton.gameObject.SetActive(true);
                     myStep = Step.unscrew;
+                    break;
+                case Step.Ram:
+                    componentButton.ForEach(button => button.gameObject.transform.parent.parent.gameObject.SetActive(true));
+
+                    frontButton.gameObject.SetActive(false);
+                    myStep = Step.component;
                     break;
             }
 
@@ -150,6 +168,7 @@ public class ARManager : MonoBehaviour
 
                     ringGroup.SetActive(false);
                     screwdriversGroup.SetActive(false);
+                    screwdriversType.SetActive(false);
                     frontButton.gameObject.SetActive(true);
                     nextButton.gameObject.SetActive(false);
                     myStep = Step.removeBackCoverGroup;
@@ -182,10 +201,17 @@ public class ARManager : MonoBehaviour
             }
         });
 
-        RamButton.onClick.AddListener(() =>
+        for (int i = 0; i < componentButton.Count; i++)
         {
-            audioSource.PlayOneShot(onClickSound);
-        });
+            componentButton[i].onClick.AddListener(() =>
+            {
+                audioSource.PlayOneShot(onClickSound);
+                componentButton.ForEach(button => button.gameObject.transform.parent.parent.gameObject.SetActive(false));
+                componentButton[i].gameObject.SetActive(true);
+                frontButton.gameObject.SetActive(true);
+                myStep = Step.Ram;
+            });
+        }
 
         frontButton.gameObject.SetActive(false);
         nextButton.gameObject.SetActive(false);
@@ -240,6 +266,7 @@ public class ARManager : MonoBehaviour
             StopCoroutine(CoroutineBack);
             CoroutineBack = null;
             screwdriversGroup.SetActive(false);
+            screwdriversType.SetActive(false);
             backCoverGroup.SetActive(false);
 
             for (int i = 0; i < ring.Count; i++)
@@ -326,6 +353,7 @@ public class ARManager : MonoBehaviour
 
                 backTime = 0.05f;
                 screwdriversGroup.SetActive(true);
+                screwdriversType.SetActive(true);
                 break;
 
             case Step.removeBackCoverGroup:
@@ -333,6 +361,7 @@ public class ARManager : MonoBehaviour
                 ActionText.text = actionMessage[1];
                 ringGroup.SetActive(false);
                 screwdriversGroup.SetActive(false);
+                screwdriversType.SetActive(false);
                 backCoverGroup.SetActive(true);
                 break;
         }
@@ -352,6 +381,7 @@ public class ARManager : MonoBehaviour
 
                 ringGroup.SetActive(false);
                 screwdriversGroup.SetActive(false);
+                screwdriversType.SetActive(false);
                 backCoverGroup.SetActive(false);
                 componentGroup.SetActive(false);
                 break;
@@ -360,6 +390,13 @@ public class ARManager : MonoBehaviour
                 componentGroup.SetActive(true);
                 ActionBlock.SetActive(true);
                 ActionText.text = actionMessage[3];
+
+                removerPowerGroup.SetActive(false);
+                break;
+            case Step.Ram:
+                componentGroup.SetActive(true);
+                ActionBlock.SetActive(true);
+                ActionText.text = actionMessage[4];
 
                 removerPowerGroup.SetActive(false);
                 break;
