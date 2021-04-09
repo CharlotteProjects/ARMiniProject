@@ -22,8 +22,8 @@ public class ARManager : MonoBehaviour
     }
     Step myStep = Step.Non;
 
-    Color transparent = new Color(1, 1, 1, 0);
-    Color transparent50 = new Color(1, 1, 1, 0.5f);
+    Color transparent = new Color(0, 0, 0, 0);
+    Color transparent50 = new Color(0, 0, 0, 0.5f);
 
     Coroutine CoroutineBack = null;
     Coroutine CoroutineBody = null;
@@ -43,7 +43,8 @@ public class ARManager : MonoBehaviour
     [SerializeField] GameObject bodyGroup = null;
     [SerializeField] GameObject removerPowerGroup = null;
     [SerializeField] GameObject componentGroup = null;
-
+    ///<summary>the number mmust be : 0 = RAM, 1 = SSD, 2 = Fan, 3 = Power, 4 = DVD</summary>
+    [SerializeField] List<GameObject> removeComponentGroup = new List<GameObject>();
     [Header("--- Message Group ---")]
     [SerializeField] GameObject messageBlock = null;
     RectTransform messageBG = null;
@@ -73,15 +74,16 @@ public class ARManager : MonoBehaviour
 
     List<string> actionMessage = new List<string>
     {
-        "Step 1 : Unscrew the screws ...",
-        "Step 2 : Remove the back cover ...",
-        "Step 3 : Remove the power ...",
-        "Please choose an option ...",
-        "You choose to remove RAM ...",
+        "Step 1 : Unscrew the screws .",
+        "Step 2 : Remove the back cover .",
+        "Step 3 : Remove the power .",
+        "Please choose an option .",
+        "You choose to remove RAM .",
         "You choose to remove SSD, to be develop ...",
         "You choose to remove Fan, to be develop ...",
         "You choose to remove Power, to be develop ...",
         "You choose to remove DVD, to be develop ...",
+        "Push the both sides of RAM, pull out RAM",
     };
 
     void Start()
@@ -106,6 +108,7 @@ public class ARManager : MonoBehaviour
         backCoverGroup.SetActive(false);
         removerPowerGroup.SetActive(false);
         componentGroup.SetActive(false);
+        removeComponentGroup.ForEach(group => group.gameObject.SetActive(false));
         LeanTween.color(messageBG, transparent, 0);
         ActionBlock.SetActive(false);
     }
@@ -145,6 +148,7 @@ public class ARManager : MonoBehaviour
                 case Step.Power:
                 case Step.DVD:
                     componentButton.ForEach(button => button.gameObject.transform.parent.parent.gameObject.SetActive(true));
+                    removeComponentGroup.ForEach(group => group.gameObject.SetActive(false));
 
                     frontButton.gameObject.SetActive(false);
                     myStep = Step.component;
@@ -242,6 +246,7 @@ public class ARManager : MonoBehaviour
 
             case Step.removeBackCoverGroup:
                 frontButton.gameObject.SetActive(true);
+                nextButton.gameObject.SetActive(false);
                 break;
 
             case Step.removePower:
@@ -376,6 +381,7 @@ public class ARManager : MonoBehaviour
                 myStep = Step.DVD;
                 break;
         }
+        StartCoroutine(_removeComponent(componentNumber));
     }
 
     IEnumerator _detectedBack()
@@ -427,6 +433,7 @@ public class ARManager : MonoBehaviour
                 screwdriversType.SetActive(false);
                 backCoverGroup.SetActive(false);
                 componentGroup.SetActive(false);
+                removeComponentGroup.ForEach(group => group.SetActive(false));
                 break;
 
             case Step.component:
@@ -440,6 +447,7 @@ public class ARManager : MonoBehaviour
                 componentGroup.SetActive(true);
                 ActionBlock.SetActive(true);
                 ActionText.text = actionMessage[4];
+                StartCoroutine(_removeComponent(0));
 
                 removerPowerGroup.SetActive(false);
                 break;
@@ -447,6 +455,7 @@ public class ARManager : MonoBehaviour
                 componentGroup.SetActive(true);
                 ActionBlock.SetActive(true);
                 ActionText.text = actionMessage[5];
+                StartCoroutine(_removeComponent(1));
 
                 removerPowerGroup.SetActive(false);
                 break;
@@ -455,6 +464,7 @@ public class ARManager : MonoBehaviour
                 componentGroup.SetActive(true);
                 ActionBlock.SetActive(true);
                 ActionText.text = actionMessage[6];
+                StartCoroutine(_removeComponent(2));
 
                 removerPowerGroup.SetActive(false);
                 break;
@@ -462,6 +472,7 @@ public class ARManager : MonoBehaviour
                 componentGroup.SetActive(true);
                 ActionBlock.SetActive(true);
                 ActionText.text = actionMessage[7];
+                StartCoroutine(_removeComponent(3));
 
                 removerPowerGroup.SetActive(false);
 
@@ -470,6 +481,7 @@ public class ARManager : MonoBehaviour
                 componentGroup.SetActive(true);
                 ActionBlock.SetActive(true);
                 ActionText.text = actionMessage[8];
+                StartCoroutine(_removeComponent(4));
 
                 removerPowerGroup.SetActive(false);
 
@@ -477,9 +489,24 @@ public class ARManager : MonoBehaviour
         }
     }
 
+    IEnumerator _removeComponent(int componentNumber)
+    {
+        yield return new WaitForSeconds(2f);
+
+        //! setActive false all component
+        componentButton.ForEach(button => button.gameObject.transform.parent.parent.gameObject.SetActive(false));
+
+        if (componentNumber < 2)
+        {
+            removeComponentGroup[componentNumber].SetActive(true);
+            ActionBlock.SetActive(true);
+            ActionText.text = actionMessage[9 + componentNumber];
+        }
+    }
+
     IEnumerator ShowMessage(int stringNumber, float displayTime = 3)
     {
-        messageText.color = Color.black;
+        messageText.color = Color.white;
         messageText.text = message[stringNumber];
         LeanTween.color(messageBG, transparent50, 0.5f);
 
