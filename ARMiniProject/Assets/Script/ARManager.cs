@@ -246,6 +246,11 @@ public class ARManager : MonoBehaviour
 
             case Step.removePower:
             case Step.component:
+            case Step.Ram:
+            case Step.SSD:
+            case Step.Fan:
+            case Step.Power:
+            case Step.DVD:
                 myStep = Step.unscrew;
                 break;
         }
@@ -351,7 +356,7 @@ public class ARManager : MonoBehaviour
     void RemoveComponent(int componentNumber)
     {
         ActionBlock.SetActive(true);
-        componentButton[componentNumber].gameObject.SetActive(true);
+        componentButton[componentNumber].gameObject.transform.parent.parent.gameObject.SetActive(true);
         ActionText.text = actionMessage[componentNumber + 4];
         switch (componentNumber)
         {
