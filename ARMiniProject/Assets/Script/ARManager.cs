@@ -155,6 +155,7 @@ public class ARManager : MonoBehaviour
                     if (CoroutineRemove != null)
                     {
                         StopCoroutine(CoroutineRemove);
+                        CoroutineRemove = null;
                     }
 
                     myStep = Step.component;
@@ -365,6 +366,7 @@ public class ARManager : MonoBehaviour
         if (CoroutineRemove != null)
         {
             StopCoroutine(CoroutineRemove);
+            CoroutineRemove = null;
         }
 
         if (CoroutineMessage == null)
@@ -390,6 +392,7 @@ public class ARManager : MonoBehaviour
                 break;
             case 1:
                 myStep = Step.SSD;
+                screwdriversType.SetActive(true);
                 break;
             case 2:
                 myStep = Step.Fan;
