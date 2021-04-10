@@ -29,6 +29,7 @@ public class ARManager : MonoBehaviour
     Coroutine CoroutineBody = null;
     Coroutine CoroutineMessage = null;
     Coroutine CoroutineCloseAction = null;
+    Coroutine CoroutineRemove = null;
 
     AudioSource audioSource = null;
 
@@ -150,6 +151,13 @@ public class ARManager : MonoBehaviour
                 case Step.Fan:
                 case Step.Power:
                 case Step.DVD:
+
+                    if (CoroutineRemove != null)
+                    {
+                        StopCoroutine(CoroutineRemove);
+                    }
+
+                    myStep = Step.component;
                     componentButton.ForEach(button => button.gameObject.transform.parent.parent.gameObject.SetActive(true));
                     removeComponentGroup.ForEach(group => group.gameObject.SetActive(false));
                     screwdriversType.SetActive(false);
@@ -158,7 +166,6 @@ public class ARManager : MonoBehaviour
                     ActionText.text = actionMessage[3];
 
                     frontButton.gameObject.SetActive(false);
-                    myStep = Step.component;
                     break;
             }
 
@@ -355,6 +362,11 @@ public class ARManager : MonoBehaviour
             CoroutineBody = StartCoroutine(_detectedBody());
         }
 
+        if (CoroutineRemove != null)
+        {
+            StopCoroutine(CoroutineRemove);
+        }
+
         if (CoroutineMessage == null)
         {
             CoroutineMessage = StartCoroutine(ShowMessage(1));
@@ -389,7 +401,11 @@ public class ARManager : MonoBehaviour
                 myStep = Step.DVD;
                 break;
         }
-        StartCoroutine(_removeComponent(componentNumber));
+
+        if (CoroutineRemove == null)
+        {
+            CoroutineRemove = StartCoroutine(_removeComponent(componentNumber));
+        }
     }
 
     IEnumerator _detectedBack()
