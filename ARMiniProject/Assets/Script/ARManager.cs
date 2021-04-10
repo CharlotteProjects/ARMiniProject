@@ -33,14 +33,12 @@ public class ARManager : MonoBehaviour
     AudioSource audioSource = null;
 
     [Header("--- Back Group ---")]
-    [SerializeField] GameObject backGroup = null;
     [SerializeField] GameObject ringGroup = null;
     [SerializeField] GameObject screwdriversGroup = null;
     [SerializeField] GameObject backCoverGroup = null;
     [SerializeField] List<GameObject> ring = new List<GameObject>();
 
     [Header("--- Body Group ---")]
-    [SerializeField] GameObject bodyGroup = null;
     [SerializeField] GameObject removerPowerGroup = null;
     [SerializeField] GameObject componentGroup = null;
     ///<summary>the number mmust be : 0 = RAM, 1 = SSD, 2 = Fan, 3 = Power, 4 = DVD</summary>
@@ -79,12 +77,17 @@ public class ARManager : MonoBehaviour
         "Step 3 : Remove the power .",
         "Please choose an option .",
         "You choose to remove RAM .",
-        "You choose to remove SSD, to be develop ...",
+        "You choose to remove SSD .",
         "You choose to remove Fan, to be develop ...",
         "You choose to remove Power, to be develop ...",
         "You choose to remove DVD, to be develop ...",
         "Push the both sides of RAM, pull out RAM",
     };
+
+    private void Awake()
+    {
+        Application.targetFrameRate = 60;
+    }
 
     void Start()
     {
@@ -149,6 +152,10 @@ public class ARManager : MonoBehaviour
                 case Step.DVD:
                     componentButton.ForEach(button => button.gameObject.transform.parent.parent.gameObject.SetActive(true));
                     removeComponentGroup.ForEach(group => group.gameObject.SetActive(false));
+                    screwdriversType.SetActive(false);
+
+                    ActionBlock.SetActive(true);
+                    ActionText.text = actionMessage[3];
 
                     frontButton.gameObject.SetActive(false);
                     myStep = Step.component;
@@ -282,6 +289,7 @@ public class ARManager : MonoBehaviour
         detected = false;
         frontButton.gameObject.SetActive(false);
         nextButton.gameObject.SetActive(false);
+        screwdriversType.SetActive(false);
 
         if (CoroutineBack != null)
         {
@@ -440,6 +448,7 @@ public class ARManager : MonoBehaviour
                 componentGroup.SetActive(true);
                 ActionBlock.SetActive(true);
                 ActionText.text = actionMessage[3];
+                componentButton.ForEach(button => button.gameObject.transform.parent.parent.gameObject.SetActive(true));
 
                 removerPowerGroup.SetActive(false);
                 break;
@@ -454,8 +463,10 @@ public class ARManager : MonoBehaviour
             case Step.SSD:
                 componentGroup.SetActive(true);
                 ActionBlock.SetActive(true);
+                screwdriversType.SetActive(true);
                 ActionText.text = actionMessage[5];
                 StartCoroutine(_removeComponent(1));
+
 
                 removerPowerGroup.SetActive(false);
                 break;
@@ -491,7 +502,7 @@ public class ARManager : MonoBehaviour
 
     IEnumerator _removeComponent(int componentNumber)
     {
-        yield return new WaitForSeconds(2f);
+        yield return new WaitForSeconds(1.5f);
 
         //! setActive false all component
         componentButton.ForEach(button => button.gameObject.transform.parent.parent.gameObject.SetActive(false));
